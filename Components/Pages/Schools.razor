@@ -1,0 +1,99 @@
+@page "/schools"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject SchoolService SchoolService
+
+<PageTitle>Schools</PageTitle>
+
+<h1>Schools</h1>
+
+@if (error)
+{
+    <div class="alert alert-danger d-flex justify-content-between align-items-center" role="alert">
+        <span class="text-danger">Unable to retrieve school data.</span>
+        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="LoadSchoolsAsync">Retry</button>
+    </div>
+}
+else if (schools == null)
+{
+    <p><em>Loading schools...</em></p>
+}
+else
+{
+    <div class="row g-4">
+        <div class="@(selectedSchool is null ? "col-12" : "col-xl-7")">
+            <input @bind="Search"
+                   @bind:event="oninput"
+                   class="form-control mb-3"
+                   placeholder="Search school..." />
+
+            <p class="text-muted small">
+                Showing @FilteredSchools.Count() of @schools.Count schools
+            </p>
+
+            @if (!FilteredSchools.Any())
+            {
+                <p>No schools match your search.</p>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var school in FilteredSchools)
+                    {
+                        <div class="@(selectedSchool is null ? "col-md-6 col-xxl-4" : "col-md-6")" @key="school.SchoolId">
+                            <SchoolCard School="school"
+                                        IsSelected="@(selectedSchool?.SchoolId == school.SchoolId)"
+                                        OnSelect="HandleSelect" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (selectedSchool is not null)
+        {
+            <div class="col-xl-5">
+                <SchoolDetails School="selectedSchool" OnClose="ClearSelection" />
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<School>? schools;
+    private School? selectedSchool;
+    private bool error;
+
+    private string Search { get; set; } = string.Empty;
+
+    private IEnumerable<School> FilteredSchools =>
+        schools is null
+            ? Enumerable.Empty<School>()
+            : schools.Where(s => string.IsNullOrWhiteSpace(Search)
+                || s.SchoolName.Contains(Search.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSchoolsAsync();
+    }
+
+    private async Task LoadSchoolsAsync()
+    {
+        error = false;
+        schools = null;
+        selectedSchool = null;
+
+        try
+        {
+            schools = await SchoolService.GetSchoolsAsync();
+        }
+        catch (Exception)
+        {
+            // HttpRequestException, JsonException, timeout, etc.
+            error = true;
+        }
+    }
+
+    private void HandleSelect(School school) => selectedSchool = school;
+
+    private void ClearSelection() => selectedSchool = null;
+}

@@ -1,0 +1,33 @@
+<div class="card school-card h-100 @(IsSelected ? "selected" : "")">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title mb-0">@School.SchoolName</h5>
+            <span class="badge text-bg-secondary">#@School.SchoolId</span>
+        </div>
+
+        <ul class="list-unstyled small mb-3">
+            <li><strong>Address:</strong> @School.Address</li>
+            <li><strong>Phone:</strong> @School.PhoneNo</li>
+            <li><strong>Email:</strong> @School.EmailAddress</li>
+            <li><strong>Proprietor:</strong> @School.ProprietorFullName</li>
+            <li><strong>Head:</strong> @School.HeadFullName</li>
+        </ul>
+
+        <button type="button" class="btn btn-sm btn-primary" @onclick="HandleSelect">
+            View details
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public School School { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<School> OnSelect { get; set; }
+
+    [Parameter]
+    public bool IsSelected { get; set; }
+
+    private Task HandleSelect() => OnSelect.InvokeAsync(School);
+}
